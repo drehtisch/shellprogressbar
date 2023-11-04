@@ -36,12 +36,17 @@ namespace ShellProgressBar
 
 		public DateTime? EndTime { get; protected set; }
 
+		public bool ObservedError { get; set; }
+
 		private ConsoleColor? _dynamicForegroundColor = null;
 		public ConsoleColor ForegroundColor
 		{
 			get
 			{
 				var realColor = _dynamicForegroundColor ?? this.Options.ForegroundColor;
+				if (this.ObservedError && this.Options.ForegroundColorError.HasValue)
+					return this.Options.ForegroundColorError.Value;
+
 				return EndTime.HasValue
 					? this.Options.ForegroundColorDone ?? realColor
 					: realColor;
@@ -102,6 +107,20 @@ namespace ShellProgressBar
 
 			var pbar = new ChildProgressBar(
 				maxTicks, message, DisplayProgress, WriteLine, WriteErrorLine, options ?? this.Options, d => this.Grow(d)
+			);
+			this.Children.Add(pbar);
+			DisplayProgress();
+			return pbar;
+		}
+
+		public IndeterminateChildProgressBar SpawnIndeterminate(string message, ProgressBarOptions options = null)
+		{
+			// if this bar collapses all child progressbar will collapse
+			if (options?.CollapseWhenFinished == false && this.Options.CollapseWhenFinished)
+				options.CollapseWhenFinished = true;
+
+			var pbar = new IndeterminateChildProgressBar(
+				message, DisplayProgress, WriteLine, WriteErrorLine, options ?? this.Options, d => this.Grow(d)
 			);
 			this.Children.Add(pbar);
 			DisplayProgress();

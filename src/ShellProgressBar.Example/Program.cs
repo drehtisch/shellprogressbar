@@ -27,6 +27,8 @@ namespace ShellProgressBar.Example
 			new NeverTicksExample(),
 			new EstimatedDurationExample(),
 			new IndeterminateProgressExample(),
+			new IndeterminateChildrenNoCollapseExample(),
+			new AlternateFinishedColorExample()
 		};
 
 		private static readonly IList<IProgressBarExample> Examples = new List<IProgressBarExample>
@@ -41,22 +43,22 @@ namespace ShellProgressBar.Example
 			new MessageBeforeAndAfterExample(),
 			new DeeplyNestedProgressBarTreeExample(),
 			new EstimatedDurationExample(),
-			new DownloadProgressExample()
+			new DownloadProgressExample(),
+			new AlternateFinishedColorExample()
 		};
 
-		static void Main(string[] args)
+		public static async Task Main(string[] args)
 		{
-			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 			var cts = new CancellationTokenSource();
 			Console.CancelKeyPress += (s, e) =>
 			{
 				cts.Cancel();
 			};
 
-			MainAsync(args, cts.Token).GetAwaiter().GetResult();
+			await MainAsync(args, cts.Token);
 		}
 
-		static async Task MainAsync(string[] args, CancellationToken token)
+		private static async Task MainAsync(string[] args, CancellationToken token)
 		{
 			var command = args.Length > 0 ? args[0] : "test";
 			switch (command)
@@ -66,19 +68,19 @@ namespace ShellProgressBar.Example
 					return;
 				case "example":
 					var nth = args.Length > 1 ? int.Parse(args[1]) : 0;
-					await RunExample(token, nth);
+					await RunExample(nth, token);
 					return;
 				default:
-					Console.Error.WriteLine($"Unknown command:{command}");
+					await Console.Error.WriteLineAsync($"Unknown command:{command}");
 					return;
 			}
 		}
 
-		private static async Task RunExample(CancellationToken token, int nth)
+		private static async Task RunExample(int nth, CancellationToken token)
 		{
 			if (nth > Examples.Count - 1 || nth < 0)
 			{
-				Console.Error.WriteLine($"There are only {Examples.Count} examples, {nth} is not valid");
+				await Console.Error.WriteLineAsync($"There are only {Examples.Count} examples, {nth} is not valid");
 			}
 
 			var example = Examples[nth];
